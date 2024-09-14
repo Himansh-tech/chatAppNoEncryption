@@ -1,37 +1,75 @@
-//different custom events are being created and handled using Socket.io to facilitate real-time communication
-// between the server and connected clients.
-
 const io = require("socket.io")(8000, {
-  //socket.io is used for establishing connection between frontend and backend and here it is uing port 8000
-
   cors: {
-    //Cross-Origin Resource Sharing
-    origin: "http://127.0.0.1:5500", // cors is like security guard
+    origin: "http://127.0.0.1:5500",
     methods: ["GET", "POST"],
   },
 });
+const crypto = require('crypto');
+const mongoose = require('mongoose');
 
-const user = {}; //const user = {}; is an object, not an array. It's used to store each client's socket ID
+// MongoDB connection
+mongoose.connect('mongodb://localhost:27017/chatDB');
 
-io.on("connection", (socket) => {
-  // When a new user joins, log their name and store it
-  socket.on("new-user-joined", (uname) => {
-    console.log("New user joined event received:", uname);
-    user[socket.id] = uname;
-    socket.broadcast.emit("user-joined", uname); // Broadcast the user's name to others
+
+// Define a schema for storing messages
+const messageSchema = new mongoose.Schema({
+  username: String,
+  message: String,
+});
+
+const Message = mongoose.model('Message', messageSchema);
+
+// AES Encryption functions
+const algorithm = 'aes-256-cbc';
+const key = crypto.randomBytes(32);
+const iv = crypto.randomBytes(16);
+
+function encrypt(text) {
+  let cipher = crypto.createCipheriv(algorithm, Buffer.from(key), iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return { iv: iv.toString('hex'), encryptedData: encrypted.toString('hex') };
+}
+
+function decrypt(text) {
+  let iv = Buffer.from(text.iv, 'hex');
+  let encryptedText = Buffer.from(text.encryptedData, 'hex');
+  let decipher = crypto.createDecipheriv(algorithm, Buffer.from(key), iv);
+  let decrypted = decipher.update(encryptedText);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  return decrypted.toString();
+}
+
+const users = {};
+
+io.on('connection', (socket) => {
+  socket.on('new-user-joined', (uname) => {
+    console.log('New user joined event received:', uname);
+    users[socket.id] = uname;
+    socket.broadcast.emit('user-joined', uname);
   });
 
-  // When a message is sent, broadcast it to all users except the sender sabko messge bhejne wala part hai ye
-  socket.on("send", (message) => {
-    socket.broadcast.emit("receive", {
-      message: message,
-      uname: user[socket.id],
+  socket.on('send', (message) => {
+    const encryptedMessage = encrypt(message); // Encrypt the message
+    const newMessage = new Message({
+      username: users[socket.id],
+      message: JSON.stringify(encryptedMessage), // Save the encrypted message
+    });
+
+    newMessage.save().then(() => {
+      console.log('Message saved to database');
+    }).catch(err => {
+      console.error('Error saving message:', err);
+    });
+
+    socket.broadcast.emit('receive', {
+      message: message, // This will be sent as plain text (you can send encrypted if needed)
+      uname: users[socket.id],
     });
   });
 
-  socket.on("disconnect", (message) => {
-    socket.broadcast.emit("left", user[socket.id]); //left is even ka name jab ye even hoga to sabko broadcast karna hai ki
-    //wo socket.id wala gaya and usko delete karna hai
-    delete user[socket.id];
+  socket.on('disconnect', () => {
+    socket.broadcast.emit('left', users[socket.id]);
+    delete users[socket.id];
   });
 });
