@@ -1,3 +1,5 @@
+//it is not end to end encrypted but only message is saved in encrypted form the server thats it
+
 const io = require("socket.io")(8000, {
   cors: {
     origin: "http://127.0.0.1:5500",
@@ -63,7 +65,7 @@ io.on('connection', (socket) => {
     });
 
     socket.broadcast.emit('receive', {
-      message: message, // This will be sent as plain text (you can send encrypted if needed)
+      message: encryptedMessage, // This will be sent as plain text (you can send encrypted if needed)
       uname: users[socket.id],
     });
   });

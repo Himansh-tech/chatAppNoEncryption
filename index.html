@@ -1,46 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SecureChat</title>
-    <script defer src="http://localhost:8000/socket.io/socket.io.js"></script> <!-- to add javascript of server -->
-    <script defer src="js/client.js"></script>      <!--server wali script pehle and client wli baad me hai -->
-    <link rel="stylesheet" href="css/style.css"></link> <!-- css-->
+    <script defer src="http://localhost:8000/socket.io/socket.io.js"></script>
+    <script defer src="js/client.js"></script>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
-
 <body>
-
-    <nav class="nav-bar">
+    <nav>
         <img class="logo" src="logo.png" alt="logo">
         <h1 class="Welcome">Welcome to SecureChat</h1>
     </nav>
 
-    <!--empty div this is main window of chat-->
-    <div class="container">
-        
-    </div>
-
-
-    <!--form tag defines section where user input is collected on a webpage
-    action specifies the url where it will be sent
-    methos specify how it will be sent-->
+    <div class="container"></div>
 
     <div class="send">
-        <form action="#" id="send-container"> <!--isme text message likh ke send karenge-->
-
-            <input type="text" uname="messageInp" id="messageInp">
+        <form action="#" id="send-container">
+            <input type="text" uname="messageInp" id="messageInp" placeholder="Type a message">
             <button class="btn" type="submit">Send</button>
-            
         </form>
     </div>
-
 </body>
+
 </html>
-
-
-
-<!-- ye frontedn hai jo apni alg si ek server ke jaisa treat kar sakte hai -->
